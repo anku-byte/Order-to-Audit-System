@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Stock Ledger – {{ item.name }}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <a href="{% url 'stock_summary' %}" class="text-blue-600 text-sm hover:underline">← Stock Summary</a>
+    <h1 class="text-2xl font-bold mt-1">Stock Ledger: {{ item.name }}</h1>
+    <p class="text-gray-500 text-sm">{{ item.get_category_display }} · base unit: {{ item.base_unit }}</p>
+  </div>
+  <div class="text-right">
+    <p class="text-sm text-gray-500">Current Balance</p>
+    <p class="text-2xl font-bold text-blue-700">{{ current_balance }} {{ item.base_unit }}</p>
+  </div>
+</div>
+
+<form method="get" class="bg-white rounded-lg shadow p-4 mb-4 flex gap-4 items-end">
+  <div>
+    <label class="block text-xs font-medium mb-1">From</label>
+    <input type="date" name="from_date" value="{{ from_date }}"
+           class="border rounded px-3 py-1.5 text-sm">
+  </div>
+  <div>
+    <label class="block text-xs font-medium mb-1">To</label>
+    <input type="date" name="to_date" value="{{ to_date }}"
+           class="border rounded px-3 py-1.5 text-sm">
+  </div>
+  <button class="bg-blue-600 text-white text-sm px-4 py-1.5 rounded hover:bg-blue-700">Filter</button>
+</form>
+
+<div class="bg-white rounded-lg shadow overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b">
+      <tr>
+        <th class="px-4 py-2 text-left">Date</th>
+        <th class="px-4 py-2 text-left">Type</th>
+        <th class="px-4 py-2 text-right">In</th>
+        <th class="px-4 py-2 text-right">Out</th>
+        <th class="px-4 py-2 text-right">Balance</th>
+        <th class="px-4 py-2 text-right">Cost/Unit (₹)</th>
+        <th class="px-4 py-2 text-left">Source</th>
+        <th class="px-4 py-2 text-left">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for row in ledger_rows %}
+    <tr class="border-b hover:bg-gray-50">
+      <td class="px-4 py-2 text-gray-500">{{ row.movement.created_at|date:"d-m-Y H:i" }}</td>
+      <td class="px-4 py-2">
+        <span class="text-xs px-2 py-0.5 rounded {% if row.movement.qty_delta > 0 %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+          {{ row.movement.get_movement_type_display }}
+        </span>
+      </td>
+      <td class="px-4 py-2 text-right font-mono text-green-700">
+        {% if row.movement.qty_delta > 0 %}{{ row.movement.qty_delta }}{% endif %}
+      </td>
+      <td class="px-4 py-2 text-right font-mono text-red-700">
+        {% if row.movement.qty_delta < 0 %}{{ row.movement.qty_delta|cut:"-" }}{% endif %}
+      </td>
+      <td class="px-4 py-2 text-right font-mono font-semibold">{{ row.running_balance }}</td>
+      <td class="px-4 py-2 text-right font-mono">{% widthratio row.movement.unit_cost 100 1 %}.00</td>
+      <td class="px-4 py-2 text-xs text-gray-500">{{ row.movement.source_content_type|default:"-" }}</td>
+      <td class="px-4 py-2 text-xs text-gray-500">{{ row.movement.notes }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">No movements found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

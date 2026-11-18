@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Stock Summary{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">Stock Summary</h1>
+  <a href="{% url 'report_stock' %}?export=csv" class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded">Export CSV</a>
+</div>
+
+{% regroup items_data by item.get_category_display as grouped %}
+{% for group in grouped %}
+<div class="bg-white rounded-lg shadow mb-4">
+  <div class="px-5 py-3 bg-gray-50 border-b font-semibold text-gray-700">{{ group.grouper }}</div>
+  <table class="w-full text-sm">
+    <thead><tr class="text-left border-b">
+      <th class="px-5 py-2">Item</th>
+      <th class="px-4 py-2">Unit</th>
+      <th class="px-4 py-2">Balance</th>
+      <th class="px-4 py-2">WAC (₹)</th>
+      <th class="px-4 py-2">Value (₹)</th>
+      <th class="px-4 py-2"></th>
+    </tr></thead>
+    <tbody>
+    {% for d in group.list %}
+    <tr class="border-b {% if d.below_reorder %}bg-red-50{% endif %}">
+      <td class="px-5 py-2 font-medium">
+        {{ d.item.name }}
+        {% if d.below_reorder %}<span class="ml-2 text-xs text-red-600 font-bold">⚠ LOW</span>{% endif %}
+      </td>
+      <td class="px-4 py-2 text-gray-600">{{ d.item.base_unit }}</td>
+      <td class="px-4 py-2 font-mono">{{ d.balance }}</td>
+      <td class="px-4 py-2 font-mono">{{ d.wac_rupees|floatformat:2 }}</td>
+      <td class="px-4 py-2 font-mono">{{ d.value_rupees|floatformat:2 }}</td>
+      <td class="px-4 py-2"><a href="{% url 'stock_ledger' d.item.id %}" class="text-blue-600 hover:underline text-xs">Ledger</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Production Runs{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold">Production Runs</h1>
+    <p class="text-sm text-gray-500">Track batch runs, material consumption, variances, and packet costing</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'bom_list' %}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm px-4 py-2 rounded">View BOMs</a>
+    <a href="{% url 'production_run_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded">+ New Run</a>
+  </div>
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-x-auto">
+<table class="w-full text-sm">
+  <thead class="bg-gray-50 border-b">
+    <tr>
+      <th class="px-4 py-2 text-left">Run #</th>
+      <th class="px-4 py-2 text-left">Date</th>
+      <th class="px-4 py-2 text-left">Product / Recipe</th>
+      <th class="px-4 py-2 text-right">Planned (units)</th>
+      <th class="px-4 py-2 text-right">Actual Good</th>
+      <th class="px-4 py-2 text-right">Yield Var %</th>
+      <th class="px-4 py-2 text-right">Cost / Packet (₹)</th>
+      <th class="px-4 py-2 text-center">Status</th>
+      <th class="px-4 py-2"></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in runs %}
+  <tr class="border-b hover:bg-gray-50">
+    <td class="px-4 py-2 font-mono font-bold text-blue-700">
+      <a href="{% url 'production_run_detail' r.id %}">#{{ r.id }}</a>
+    </td>
+    <td class="px-4 py-2 text-gray-600">{{ r.run_date }}</td>
+    <td class="px-4 py-2 font-medium">{{ r.bom.product.name }}</td>
+    <td class="px-4 py-2 text-right font-mono">{{ r.planned_output }}</td>
+    <td class="px-4 py-2 text-right font-mono font-semibold">{{ r.actual_good_output }}</td>
+    <td class="px-4 py-2 text-right font-mono font-bold {% if r.yield_variance_flagged %}text-red-600{% else %}text-gray-700{% endif %}">
+      {{ r.yield_variance_pct }}%
+      {% if r.yield_variance_flagged %}<span class="text-xs ml-1" title="Variance beyond tolerance">🚩</span>{% endif %}
+    </td>
+    <td class="px-4 py-2 text-right font-mono font-semibold text-gray-800">
+      {% if r.status == 'completed' %}
+        ₹{{ r.cost_per_packet_rupees|floatformat:2 }}
+      {% else %}
+        —
+      {% endif %}
+    </td>
+    <td class="px-4 py-2 text-center">
+      <span class="text-xs px-2 py-0.5 rounded font-semibold
+        {% if r.status == 'completed' %}bg-green-100 text-green-800
+        {% elif r.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+        {% else %}bg-gray-100 text-gray-700{% endif %}">
+        {{ r.get_status_display }}
+      </span>
+    </td>
+    <td class="px-4 py-2 text-right">
+      <a href="{% url 'production_run_detail' r.id %}" class="text-blue-600 hover:underline text-xs">Manage</a>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">No production runs recorded yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

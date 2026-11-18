@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Orders{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">Orders</h1>
+  <a href="{% url 'order_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded">+ New Order</a>
+</div>
+<div class="bg-white rounded-lg shadow overflow-x-auto">
+<table class="w-full text-sm">
+  <thead class="bg-gray-50 border-b">
+    <tr>
+      <th class="px-4 py-2 text-left">#</th>
+      <th class="px-4 py-2 text-left">Customer</th>
+      <th class="px-4 py-2 text-left">Salesman</th>
+      <th class="px-4 py-2 text-left">Date</th>
+      <th class="px-4 py-2 text-left">Status</th>
+      <th class="px-4 py-2"></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for order in orders %}
+  <tr class="border-b hover:bg-gray-50">
+    <td class="px-4 py-2 font-mono">{{ order.id }}</td>
+    <td class="px-4 py-2 font-medium">{{ order.customer.name }}</td>
+    <td class="px-4 py-2">{{ order.salesman.username }}</td>
+    <td class="px-4 py-2 text-gray-500">{{ order.order_date }}</td>
+    <td class="px-4 py-2">
+      <span class="text-xs px-2 py-1 rounded
+        {% if order.status == 'submitted' %}bg-yellow-100 text-yellow-800
+        {% elif order.status == 'dispatched' %}bg-green-100 text-green-800
+        {% elif order.status == 'rejected' %}bg-red-100 text-red-800
+        {% else %}bg-gray-100 text-gray-700{% endif %}">
+        {{ order.status }}
+      </span>
+    </td>
+    <td class="px-4 py-2"><a href="{% url 'order_detail' order.id %}" class="text-blue-600 hover:underline text-xs">View</a></td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No orders yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

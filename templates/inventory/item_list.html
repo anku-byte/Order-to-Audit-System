@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Items{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Items</h1>
+<div class="bg-white rounded-lg shadow overflow-x-auto">
+<table class="w-full text-sm">
+  <thead class="bg-gray-50 border-b">
+    <tr>
+      <th class="px-4 py-2 text-left">Name</th>
+      <th class="px-4 py-2 text-left">Category</th>
+      <th class="px-4 py-2 text-left">Unit</th>
+      <th class="px-4 py-2 text-left">HSN</th>
+      <th class="px-4 py-2 text-left">GST %</th>
+      <th class="px-4 py-2 text-left">Reorder</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in items %}
+  <tr class="border-b hover:bg-gray-50">
+    <td class="px-4 py-2 font-medium">{{ item.name }}</td>
+    <td class="px-4 py-2">{{ item.get_category_display }}</td>
+    <td class="px-4 py-2">{{ item.base_unit }}</td>
+    <td class="px-4 py-2">{{ item.hsn_code|default:"-" }}</td>
+    <td class="px-4 py-2">{{ item.gst_rate }}%</td>
+    <td class="px-4 py-2">{{ item.reorder_level|default:"-" }}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No items.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

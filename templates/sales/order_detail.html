@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <a href="{% url 'order_list' %}" class="text-blue-600 text-sm hover:underline">← Orders</a>
+    <h1 class="text-2xl font-bold mt-1">Order #{{ order.id }}</h1>
+    <p class="text-gray-500 text-sm">{{ order.customer.name }} · {{ order.order_date }} · by {{ order.salesman.username }}</p>
+  </div>
+  <span class="text-sm px-3 py-1 rounded
+    {% if order.status == 'submitted' %}bg-yellow-100 text-yellow-800
+    {% elif order.status == 'dispatched' %}bg-green-100 text-green-800
+    {% elif order.status == 'rejected' %}bg-red-100 text-red-800
+    {% else %}bg-gray-100{% endif %}">
+    {{ order.status }}
+  </span>
+</div>
+
+<div class="bg-white rounded-lg shadow p-5 mb-4">
+  <h2 class="font-semibold mb-3">Order Lines & Stock Check</h2>
+  <table class="w-full text-sm">
+    <thead class="border-b">
+      <tr>
+        <th class="text-left pb-2">Item</th>
+        <th class="text-right pb-2">Ordered</th>
+        <th class="text-right pb-2">Price (₹)</th>
+        <th class="text-right pb-2">Total (₹)</th>
+        <th class="text-right pb-2">Stock</th>
+        <th class="text-right pb-2">Shortage</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for sc in stock_checks %}
+    <tr class="border-b {% if sc.shortage > 0 %}bg-red-50{% endif %}">
+      <td class="py-2">{{ sc.line.item.name }}</td>
+      <td class="text-right">{{ sc.line.qty }}</td>
+      <td class="text-right font-mono">{% widthratio sc.line.unit_price_paise 100 1 %}</td>
+      <td class="text-right font-mono">{% widthratio sc.line.line_total_paise 100 1 %}</td>
+      <td class="text-right {% if sc.shortage > 0 %}text-red-600 font-bold{% else %}text-green-700{% endif %}">{{ sc.balance }}</td>
+      <td class="text-right {% if sc.shortage > 0 %}text-red-700 font-bold{% endif %}">
+        {% if sc.shortage > 0 %}⚠ {{ sc.shortage }}{% else %}—{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if order.status == 'submitted' and user.role in 'admin,owner' %}
+<div class="flex gap-3">
+  <form method="post" action="{% url 'order_approve' order.id %}">
+    {% csrf_token %}
+    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold">
+      ✓ Approve & Invoice
+    </button>
+  </form>
+  <form method="post" action="{% url 'order_reject' order.id %}">
+    {% csrf_token %}
+    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded font-semibold">
+      ✗ Reject
+    </button>
+  </form>
+</div>
+{% endif %}
+
+{% if order.status == 'dispatched' %}
+<div class="bg-green-50 border border-green-200 rounded p-4">
+  <p class="text-green-800 font-medium">Order dispatched. <a href="{% url 'invoice_detail' order.invoice.id %}" class="underline">View Invoice {{ order.invoice.invoice_number }}</a></p>
+</div>
+{% endif %}
+{% endblock %}

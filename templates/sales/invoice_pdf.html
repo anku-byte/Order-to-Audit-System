@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tax Invoice {{ invoice.invoice_number }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 12px;
+      color: #333;
+      line-height: 1.4;
+    }
+    .header-table, .items-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .header-table td {
+      vertical-align: top;
+      padding: 4px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1e3a8a;
+      text-transform: uppercase;
+      text-align: right;
+    }
+    .company-name {
+      font-size: 16px;
+      font-weight: bold;
+      color: #111;
+    }
+    .border-box {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 15px;
+      border-radius: 4px;
+    }
+    .items-table {
+      margin-top: 20px;
+    }
+    .items-table th {
+      background-color: #f3f4f6;
+      border: 1px solid #d1d5db;
+      padding: 8px 6px;
+      font-size: 11px;
+      text-align: left;
+    }
+    .items-table td {
+      border: 1px solid #e5e7eb;
+      padding: 8px 6px;
+    }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .font-bold { font-weight: bold; }
+    .totals-row td {
+      background-color: #f9fafb;
+      font-weight: bold;
+    }
+    .footer-note {
+      margin-top: 30px;
+      font-size: 10px;
+      color: #666;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <table class="header-table">
+    <tr>
+      <td>
+        <div class="company-name">South Indian Snacks Factory</div>
+        <div>Industrial Estate, Tiruchirappalli, Tamil Nadu</div>
+        <div>GSTIN: 33AAAAA0000A1Z5 | State: Tamil Nadu (Code: 33 / TN)</div>
+        <div>Email: accounts@factory.local | Tel: +91 431 2500000</div>
+      </td>
+      <td class="text-right">
+        <div class="title">Tax Invoice</div>
+        <div class="font-bold">Invoice No: {{ invoice.invoice_number }}</div>
+        <div>Date: {{ invoice.invoice_date|date:"d-m-Y" }}</div>
+        <div>FY: {{ invoice.fy }}</div>
+        <div>Supply Type: {{ invoice.supply_type|upper }}</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="border-box">
+    <table class="header-table">
+      <tr>
+        <td style="width: 50%;">
+          <strong>Billed To (Recipient):</strong><br>
+          <span style="font-size: 14px; font-weight: bold;">{{ invoice.customer.name }}</span><br>
+          {{ invoice.customer.address|default:"Customer Address" }}<br>
+          State: {{ invoice.customer.state_code }}<br>
+          {% if invoice.customer.gstin %}GSTIN: {{ invoice.customer.gstin }}<br>{% endif %}
+          Category: {{ invoice.customer.get_customer_type_display }}
+        </td>
+        <td style="width: 50%;">
+          <strong>Place of Supply:</strong> {{ invoice.customer.state_code }}<br>
+          <strong>Reverse Charge:</strong> No<br>
+          <strong>Order Ref:</strong> Order #{{ invoice.order.id }}<br>
+          <strong>Mode of Transport:</strong> Road Dispatch<br>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th style="width: 5%;">#</th>
+        <th style="width: 30%;">Item Description</th>
+        <th style="width: 10%;">HSN</th>
+        <th class="text-right" style="width: 10%;">Qty</th>
+        <th class="text-right" style="width: 12%;">Rate (₹)</th>
+        <th class="text-right" style="width: 13%;">Taxable (₹)</th>
+        {% if invoice.supply_type == 'intrastate' %}
+        <th class="text-right" style="width: 10%;">CGST (₹)</th>
+        <th class="text-right" style="width: 10%;">SGST (₹)</th>
+        {% else %}
+        <th class="text-right" style="width: 20%;">IGST (₹)</th>
+        {% endif %}
+        <th class="text-right" style="width: 15%;">Total (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in invoice.lines.all %}
+      <tr>
+        <td class="text-center">{{ forloop.counter }}</td>
+        <td><strong>{{ line.item.name }}</strong></td>
+        <td>{{ line.hsn_code }}</td>
+        <td class="text-right">{{ line.qty }}</td>
+        <td class="text-right">{% widthratio line.unit_price_paise 100 1 %}.00</td>
+        <td class="text-right">{% widthratio line.taxable_value_paise 100 1 %}.00</td>
+        {% if invoice.supply_type == 'intrastate' %}
+        <td class="text-right">{% widthratio line.cgst_paise 100 1 %}.00 (2.5%)</td>
+        <td class="text-right">{% widthratio line.sgst_paise 100 1 %}.00 (2.5%)</td>
+        {% else %}
+        <td class="text-right">{% widthratio line.igst_paise 100 1 %}.00 ({{ line.gst_rate }}%)</td>
+        {% endif %}
+        <td class="text-right font-bold">{% widthratio line.line_total_paise 100 1 %}.00</td>
+      </tr>
+      {% endfor %}
+      <tr class="totals-row">
+        <td colspan="5" class="text-right">Total:</td>
+        <td class="text-right">₹{% widthratio invoice.taxable_value_paise 100 1 %}.00</td>
+        {% if invoice.supply_type == 'intrastate' %}
+        <td class="text-right">₹{% widthratio invoice.cgst_paise 100 1 %}.00</td>
+        <td class="text-right">₹{% widthratio invoice.sgst_paise 100 1 %}.00</td>
+        {% else %}
+        <td class="text-right">₹{% widthratio invoice.igst_paise 100 1 %}.00</td>
+        {% endif %}
+        <td class="text-right">₹{{ invoice.total_rupees|floatformat:2 }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top: 25px; display: flex; justify-content: space-between;">
+    <div style="float: left; width: 60%;">
+      <strong>Terms & Conditions:</strong>
+      <ol style="margin: 5px 0 0 15px; padding: 0; font-size: 10px; color: #555;">
+        <li>Goods once sold will not be taken back without valid credit authorization.</li>
+        <li>Payment due upon invoice presentation unless credit term agreed.</li>
+        <li>Subject to Tiruchirappalli jurisdiction.</li>
+      </ol>
+    </div>
+    <div style="float: right; width: 35%; text-align: center; margin-top: 20px;">
+      <div style="height: 40px;"></div>
+      <div style="border-top: 1px solid #333; padding-top: 5px; font-weight: bold;">Authorised Signatory</div>
+      <div style="font-size: 10px; color: #666;">For South Indian Snacks Factory</div>
+    </div>
+    <div style="clear: both;"></div>
+  </div>
+
+  <div class="footer-note">
+    This is a computer-generated GST tax invoice produced by the Order-to-Audit management system.
+  </div>
+</body>
+</html>

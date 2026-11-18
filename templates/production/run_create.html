@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Start Production Run{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto">
+<div class="mb-6">
+  <a href="{% url 'production_run_list' %}" class="text-blue-600 text-sm hover:underline">← Production Runs</a>
+  <h1 class="text-2xl font-bold mt-1">Start New Production Batch</h1>
+</div>
+
+<form method="post" class="bg-white rounded-lg shadow p-6 space-y-4">
+  {% csrf_token %}
+  <div>
+    <label class="block text-sm font-medium mb-1">Select BOM / Recipe</label>
+    <select name="bom" required class="w-full border rounded px-3 py-2 text-sm">
+      <option value="">Select Recipe…</option>
+      {% for b in boms %}
+      <option value="{{ b.id }}">{{ b.name }} (Yield: {{ b.expected_yield }} {{ b.product.base_unit }}s)</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium mb-1">Run Date</label>
+    <input type="date" name="run_date" required value="{% now 'Y-m-d' %}"
+           class="w-full border rounded px-3 py-2 text-sm">
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium mb-1">Batch Multiplier</label>
+    <input type="number" name="batch_multiplier" step="0.1" min="0.1" value="1.0" required
+           class="w-full border rounded px-3 py-2 text-sm font-mono">
+    <p class="text-xs text-gray-500 mt-1">1.0 = standard single batch; 2.0 = double batch; scales all BOM recipe ingredients.</p>
+  </div>
+
+  <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded mt-4">
+    Initialize Batch Run
+  </button>
+</form>
+</div>
+{% endblock %}

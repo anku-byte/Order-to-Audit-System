@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Invoices{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">GST Tax Invoices</h1>
+  <a href="{% url 'report_sales' %}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded">Sales Register</a>
+</div>
+<div class="bg-white rounded-lg shadow overflow-x-auto">
+<table class="w-full text-sm">
+  <thead class="bg-gray-50 border-b">
+    <tr>
+      <th class="px-4 py-2 text-left">Invoice No</th>
+      <th class="px-4 py-2 text-left">Date</th>
+      <th class="px-4 py-2 text-left">Customer</th>
+      <th class="px-4 py-2 text-left">Supply Type</th>
+      <th class="px-4 py-2 text-right">Taxable (₹)</th>
+      <th class="px-4 py-2 text-right">GST (₹)</th>
+      <th class="px-4 py-2 text-right">Total (₹)</th>
+      <th class="px-4 py-2 text-right">Outstanding (₹)</th>
+      <th class="px-4 py-2 text-center">Status</th>
+      <th class="px-4 py-2"></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for inv in invoices %}
+  <tr class="border-b hover:bg-gray-50">
+    <td class="px-4 py-2 font-mono font-medium text-blue-600">
+      <a href="{% url 'invoice_detail' inv.id %}">{{ inv.invoice_number|default:"Draft" }}</a>
+    </td>
+    <td class="px-4 py-2 text-gray-500">{{ inv.invoice_date }}</td>
+    <td class="px-4 py-2 font-medium">{{ inv.customer.name }}</td>
+    <td class="px-4 py-2 text-xs uppercase">{{ inv.supply_type }}</td>
+    <td class="px-4 py-2 text-right font-mono">{% widthratio inv.taxable_value_paise 100 1 %}.00</td>
+    <td class="px-4 py-2 text-right font-mono">
+      {% widthratio inv.cgst_paise|add:inv.sgst_paise|add:inv.igst_paise 100 1 %}.00
+    </td>
+    <td class="px-4 py-2 text-right font-mono font-semibold">₹{{ inv.total_rupees|floatformat:2 }}</td>
+    <td class="px-4 py-2 text-right font-mono {% if inv.outstanding_paise > 0 %}text-red-600 font-semibold{% else %}text-green-600{% endif %}">
+      {% widthratio inv.outstanding_paise 100 1 %}.00
+    </td>
+    <td class="px-4 py-2 text-center">
+      <span class="text-xs px-2 py-0.5 rounded {% if inv.status == 'posted' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-700{% endif %}">
+        {{ inv.status }}
+      </span>
+    </td>
+    <td class="px-4 py-2 text-right">
+      <a href="{% url 'invoice_pdf' inv.id %}" target="_blank" class="text-blue-600 hover:underline text-xs mr-2">PDF</a>
+      <a href="{% url 'invoice_detail' inv.id %}" class="text-gray-600 hover:underline text-xs">View</a>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="10" class="px-4 py-8 text-center text-gray-400">No invoices yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

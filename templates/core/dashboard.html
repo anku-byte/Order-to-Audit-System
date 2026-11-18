@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Dashboard</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  <div class="bg-white rounded-lg shadow p-5 border-l-4 border-blue-500">
+    <p class="text-sm text-gray-500">Pending Orders</p>
+    <p class="text-3xl font-bold text-blue-700">{{ pending_orders }}</p>
+    <a href="{% url 'order_list' %}" class="text-xs text-blue-500 hover:underline">View all →</a>
+  </div>
+  <div class="bg-white rounded-lg shadow p-5 border-l-4 border-orange-500">
+    <p class="text-sm text-gray-500">Total Outstanding</p>
+    <p class="text-3xl font-bold text-orange-700">₹{{ outstanding_rupees|floatformat:2 }}</p>
+    <a href="{% url 'outstanding' %}" class="text-xs text-orange-500 hover:underline">View →</a>
+  </div>
+  <div class="bg-white rounded-lg shadow p-5 border-l-4 border-red-500">
+    <p class="text-sm text-gray-500">Low Stock Alerts</p>
+    <p class="text-3xl font-bold text-red-700">{{ low_stock|length }}</p>
+  </div>
+</div>
+
+{% if low_stock %}
+<div class="bg-white rounded-lg shadow p-5 mb-6">
+  <h2 class="font-semibold text-red-600 mb-3">⚠ Low Stock Alerts</h2>
+  <table class="w-full text-sm">
+    <thead><tr class="text-left border-b">
+      <th class="pb-2">Item</th><th>Balance</th><th>Reorder Level</th>
+    </tr></thead>
+    <tbody>
+    {% for alert in low_stock %}
+    <tr class="border-b">
+      <td class="py-2"><a href="{% url 'stock_ledger' alert.item.id %}" class="text-blue-600 hover:underline">{{ alert.item.name }}</a></td>
+      <td class="text-red-600 font-medium">{{ alert.balance }} {{ alert.item.base_unit }}</td>
+      <td>{{ alert.item.reorder_level }} {{ alert.item.base_unit }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if flagged_lines %}
+<div class="bg-white rounded-lg shadow p-5 mb-6">
+  <h2 class="font-semibold text-orange-600 mb-3">🚩 Variance Flags</h2>
+  <table class="w-full text-sm">
+    <thead><tr class="text-left border-b">
+      <th class="pb-2">Run</th><th>Item</th><th>Planned</th><th>Actual</th><th>Variance %</th>
+    </tr></thead>
+    <tbody>
+    {% for line in flagged_lines %}
+    <tr class="border-b">
+      <td class="py-2"><a href="{% url 'production_run_detail' line.run.id %}" class="text-blue-600 hover:underline">Run #{{ line.run.id }}</a></td>
+      <td>{{ line.bom_line.item.name }}</td>
+      <td>{{ line.planned_qty }}</td>
+      <td>{{ line.actual_qty }}</td>
+      <td class="font-bold {% if line.variance_pct < 0 %}text-red-600{% else %}text-orange-600{% endif %}">{{ line.variance_pct }}%</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="bg-white rounded-lg shadow p-5">
+  <h2 class="font-semibold mb-3">Recent Production Runs</h2>
+  <table class="w-full text-sm">
+    <thead><tr class="text-left border-b">
+      <th class="pb-2">Run</th><th>Product</th><th>Date</th><th>Status</th><th>Output</th>
+    </tr></thead>
+    <tbody>
+    {% for run in recent_runs %}
+    <tr class="border-b">
+      <td class="py-2"><a href="{% url 'production_run_detail' run.id %}" class="text-blue-600 hover:underline">#{{ run.id }}</a></td>
+      <td>{{ run.bom.product.name }}</td>
+      <td>{{ run.run_date }}</td>
+      <td><span class="px-2 py-0.5 rounded text-xs {% if run.status == 'completed' %}bg-green-100 text-green-700{% elif run.status == 'draft' %}bg-gray-100 text-gray-600{% else %}bg-yellow-100 text-yellow-700{% endif %}">{{ run.status }}</span></td>
+      <td>{{ run.actual_good_output }}/{{ run.planned_output }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="py-4 text-gray-400 text-center">No production runs yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Update Run Actuals #{{ run.id }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+<div class="mb-6">
+  <a href="{% url 'production_run_detail' run.id %}" class="text-blue-600 text-sm hover:underline">← Run Details</a>
+  <h1 class="text-2xl font-bold mt-1">Record Floor Actuals: Run #{{ run.id }}</h1>
+  <p class="text-sm text-gray-500">{{ run.bom.name }} (Planned: {{ run.planned_output }} packets)</p>
+</div>
+
+<form method="post" class="bg-white rounded-lg shadow p-6 space-y-6">
+  {% csrf_token %}
+
+  <div class="border-b pb-4">
+    <h3 class="font-bold text-gray-800 mb-3">Finished Packets & Scrap / Damage</h3>
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Good Output Packets</label>
+        <input type="number" name="actual_good_output" step="1" required value="{{ run.actual_good_output }}"
+               class="w-full border rounded px-3 py-2 text-sm font-mono font-bold text-green-700">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Damaged Pouches</label>
+        <input type="number" name="damaged_packaging_qty" step="1" value="{{ run.damaged_packaging_qty }}"
+               class="w-full border rounded px-3 py-2 text-sm font-mono text-orange-600">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Scrap (units)</label>
+        <input type="number" name="actual_scrap_qty" step="0.1" value="{{ run.actual_scrap_qty }}"
+               class="w-full border rounded px-3 py-2 text-sm font-mono text-gray-600">
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h3 class="font-bold text-gray-800 mb-3">Actual Ingredient & Packaging Consumption</h3>
+    <p class="text-xs text-gray-500 mb-3">Enter the exact quantities issued/consumed on the factory floor (in base units):</p>
+    <div class="space-y-3">
+      {% for line in lines %}
+      <div class="flex items-center justify-between border p-3 rounded">
+        <div>
+          <span class="font-medium text-sm text-gray-900">{{ line.bom_line.item.name }}</span>
+          <span class="text-xs text-gray-500 ml-2">Planned: {{ line.planned_qty }} {{ line.unit }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="number" step="0.001" name="actual_{{ line.bom_line_id }}" value="{{ line.actual_qty }}" required
+                 class="w-32 border rounded px-2 py-1 text-right font-mono text-sm font-semibold">
+          <span class="text-xs text-gray-500 w-12">{{ line.unit }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-sm">
+    Save Run Actuals
+  </button>
+</form>
+</div>
+{% endblock %}

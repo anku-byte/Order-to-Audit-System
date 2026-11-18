@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Purchase #{{ purchase.id }}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <a href="{% url 'purchase_list' %}" class="text-blue-600 text-sm hover:underline">← Purchases</a>
+    <h1 class="text-2xl font-bold mt-1">Goods Receipt #{{ purchase.id }}</h1>
+    <p class="text-gray-500 text-sm">Supplier: {{ purchase.supplier.name }} · Date: {{ purchase.purchase_date }} · Status: {{ purchase.get_status_display }}</p>
+  </div>
+  <div>
+    {% if purchase.status == 'draft' %}
+    <form method="post" action="{% url 'purchase_post' purchase.id %}" onsubmit="return confirm('Post this purchase and update inventory stock ledger?');">
+      {% csrf_token %}
+      <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold text-sm px-4 py-2 rounded">
+        ✓ Post & Update Stock Ledger
+      </button>
+    </form>
+    {% else %}
+    <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded">
+      ✓ Posted to Stock
+    </span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-5 mb-6 overflow-x-auto">
+  <h2 class="font-semibold mb-3">Received Items</h2>
+  <table class="w-full text-sm">
+    <thead class="border-b bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-3">Item</th>
+        <th class="text-left py-2 px-3">Category</th>
+        <th class="text-right py-2 px-3">Received Qty</th>
+        <th class="text-left py-2 px-3">Unit</th>
+        <th class="text-right py-2 px-3">Base Qty</th>
+        <th class="text-right py-2 px-3">Unit Rate (₹)</th>
+        <th class="text-right py-2 px-3">Line Total (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in purchase.lines.all %}
+      <tr class="border-b">
+        <td class="py-2 px-3 font-medium">{{ line.item.name }}</td>
+        <td class="py-2 px-3 text-xs text-gray-500">{{ line.item.get_category_display }}</td>
+        <td class="py-2 px-3 text-right font-mono">{{ line.qty }}</td>
+        <td class="py-2 px-3 text-xs text-gray-600">{{ line.unit }}</td>
+        <td class="py-2 px-3 text-right font-mono text-gray-600">{{ line.qty_in_base }} {{ line.item.base_unit }}</td>
+        <td class="py-2 px-3 text-right font-mono">{% widthratio line.unit_price_paise 100 1 %}.00</td>
+        <td class="py-2 px-3 text-right font-mono font-semibold">₹{% widthratio line.total_paise 100 1 %}.00</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot class="border-t bg-gray-50 font-bold">
+      <tr>
+        <td colspan="6" class="py-2 px-3 text-right">Total Purchase Value:</td>
+        <td class="py-2 px-3 text-right font-mono text-blue-700 text-base">₹{% widthratio purchase.total_paise 100 1 %}.00</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% endblock %}

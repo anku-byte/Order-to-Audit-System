@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}New Order{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+<h1 class="text-2xl font-bold mb-6">New Order</h1>
+<form method="post" class="bg-white rounded-lg shadow p-6 space-y-4">
+  {% csrf_token %}
+  <div>
+    <label class="block text-sm font-medium mb-1">Customer</label>
+    <select name="customer" required class="w-full border rounded px-3 py-2 text-sm">
+      <option value="">Select customer…</option>
+      {% for c in customers %}
+      <option value="{{ c.id }}">{{ c.name }} ({{ c.state_code }})</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div id="lines">
+    <label class="block text-sm font-medium mb-2">Items</label>
+    <div class="space-y-2 line-row">
+      <div class="flex gap-2 items-center">
+        <select name="item_id" class="flex-1 border rounded px-2 py-1.5 text-sm">
+          <option value="">Select item…</option>
+          {% for item in items %}
+          <option value="{{ item.id }}" data-price="5000">{{ item.name }} ({{ item.base_unit }})</option>
+          {% endfor %}
+        </select>
+        <input type="number" name="qty" placeholder="Qty" step="0.001" min="0.001"
+               class="w-24 border rounded px-2 py-1.5 text-sm">
+        <input type="number" name="unit_price_paise" placeholder="Price (paise)" value="5000"
+               class="w-32 border rounded px-2 py-1.5 text-sm">
+        <span class="text-xs text-gray-400">paise</span>
+      </div>
+    </div>
+    <button type="button" onclick="addLine()"
+            class="mt-2 text-sm text-blue-600 hover:underline">+ Add line</button>
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium mb-1">Notes</label>
+    <textarea name="notes" rows="2" class="w-full border rounded px-3 py-2 text-sm"></textarea>
+  </div>
+
+  <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 rounded">
+    Submit Order
+  </button>
+</form>
+</div>
+
+<script>
+function addLine() {
+  const container = document.querySelector('#lines .space-y-2');
+  const tpl = container.querySelector('.flex').cloneNode(true);
+  tpl.querySelectorAll('input').forEach(el => el.value = '');
+  container.appendChild(tpl);
+}
+</script>
+{% endblock %}

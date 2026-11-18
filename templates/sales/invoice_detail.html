@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <a href="{% url 'invoice_list' %}" class="text-blue-600 text-sm hover:underline">← Invoices</a>
+    <h1 class="text-2xl font-bold mt-1">Tax Invoice: {{ invoice.invoice_number }}</h1>
+    <p class="text-gray-500 text-sm">Date: {{ invoice.invoice_date }} · FY: {{ invoice.fy }} · Status: {{ invoice.status }}</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'invoice_pdf' invoice.id %}" target="_blank"
+       class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded">
+      Download PDF
+    </a>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+  <div class="bg-white rounded-lg shadow p-5">
+    <h3 class="font-semibold text-gray-700 mb-2">Billed To (Customer)</h3>
+    <p class="font-bold text-lg">{{ invoice.customer.name }}</p>
+    <p class="text-sm text-gray-600">Type: {{ invoice.customer.get_customer_type_display }}</p>
+    <p class="text-sm text-gray-600">State: {{ invoice.customer.state_code }} ({{ invoice.supply_type|upper }})</p>
+    {% if invoice.customer.gstin %}
+    <p class="text-sm text-gray-600 font-mono">GSTIN: {{ invoice.customer.gstin }}</p>
+    {% endif %}
+  </div>
+  <div class="bg-white rounded-lg shadow p-5">
+    <h3 class="font-semibold text-gray-700 mb-2">Supplier Details</h3>
+    <p class="font-bold text-lg">South Indian Snacks Factory</p>
+    <p class="text-sm text-gray-600">State: Tamil Nadu (TN)</p>
+    <p class="text-sm text-gray-600">Place of Supply: {{ invoice.customer.state_code }}</p>
+    <p class="text-sm text-gray-600">Supply Classification: {{ invoice.supply_type|title }}</p>
+  </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-5 mb-6 overflow-x-auto">
+  <h2 class="font-semibold mb-3">Itemized Particulars</h2>
+  <table class="w-full text-sm">
+    <thead class="border-b bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-3">Item</th>
+        <th class="text-left py-2 px-3">HSN</th>
+        <th class="text-right py-2 px-3">Qty</th>
+        <th class="text-right py-2 px-3">Unit Rate (₹)</th>
+        <th class="text-right py-2 px-3">Taxable (₹)</th>
+        <th class="text-right py-2 px-3">GST %</th>
+        {% if invoice.supply_type == 'intrastate' %}
+        <th class="text-right py-2 px-3">CGST (₹)</th>
+        <th class="text-right py-2 px-3">SGST (₹)</th>
+        {% else %}
+        <th class="text-right py-2 px-3">IGST (₹)</th>
+        {% endif %}
+        <th class="text-right py-2 px-3">Line Total (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in invoice.lines.all %}
+      <tr class="border-b">
+        <td class="py-2 px-3 font-medium">{{ line.item.name }}</td>
+        <td class="py-2 px-3 font-mono text-gray-500">{{ line.hsn_code }}</td>
+        <td class="py-2 px-3 text-right font-mono">{{ line.qty }}</td>
+        <td class="py-2 px-3 text-right font-mono">{% widthratio line.unit_price_paise 100 1 %}.00</td>
+        <td class="py-2 px-3 text-right font-mono">{% widthratio line.taxable_value_paise 100 1 %}.00</td>
+        <td class="py-2 px-3 text-right">{{ line.gst_rate }}%</td>
+        {% if invoice.supply_type == 'intrastate' %}
+        <td class="py-2 px-3 text-right font-mono">{% widthratio line.cgst_paise 100 1 %}.00</td>
+        <td class="py-2 px-3 text-right font-mono">{% widthratio line.sgst_paise 100 1 %}.00</td>
+        {% else %}
+        <td class="py-2 px-3 text-right font-mono">{% widthratio line.igst_paise 100 1 %}.00</td>
+        {% endif %}
+        <td class="py-2 px-3 text-right font-mono font-semibold">{% widthratio line.line_total_paise 100 1 %}.00</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot class="font-semibold bg-gray-50 border-t">
+      <tr>
+        <td colspan="4" class="py-2 px-3 text-right">Totals:</td>
+        <td class="py-2 px-3 text-right font-mono">₹{% widthratio invoice.taxable_value_paise 100 1 %}.00</td>
+        <td></td>
+        {% if invoice.supply_type == 'intrastate' %}
+        <td class="py-2 px-3 text-right font-mono">₹{% widthratio invoice.cgst_paise 100 1 %}.00</td>
+        <td class="py-2 px-3 text-right font-mono">₹{% widthratio invoice.sgst_paise 100 1 %}.00</td>
+        {% else %}
+        <td class="py-2 px-3 text-right font-mono">₹{% widthratio invoice.igst_paise 100 1 %}.00</td>
+        {% endif %}
+        <td class="py-2 px-3 text-right font-mono text-blue-700 text-base">₹{{ invoice.total_rupees|floatformat:2 }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="bg-white rounded-lg shadow p-5">
+    <h3 class="font-semibold text-gray-700 mb-3">Payment Allocations</h3>
+    {% if payment_allocations %}
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b text-left text-xs text-gray-500">
+          <th class="pb-2">Date</th><th>Ref</th><th class="text-right">Allocated (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alloc in payment_allocations %}
+        <tr class="border-b">
+          <td class="py-2">{{ alloc.payment.payment_date }}</td>
+          <td>{{ alloc.payment.reference|default:alloc.payment.get_mode_display }}</td>
+          <td class="py-2 text-right font-mono text-green-700">₹{% widthratio alloc.allocated_paise 100 1 %}.00</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-sm text-gray-500">No payments recorded against this invoice yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-5 flex flex-col justify-between">
+    <div>
+      <h3 class="font-semibold text-gray-700 mb-2">Invoice Settlement Status</h3>
+      <div class="flex justify-between py-2 border-b">
+        <span class="text-gray-600">Total Invoice Amount:</span>
+        <span class="font-mono font-semibold">₹{{ invoice.total_rupees|floatformat:2 }}</span>
+      </div>
+      <div class="flex justify-between py-2 border-b">
+        <span class="text-gray-600">Amount Paid:</span>
+        <span class="font-mono font-semibold text-green-700">
+          ₹{% widthratio invoice.total_paise|add:"-1"|add:"1" 100 1 as dummy %}
+          {% widthratio invoice.total_paise|add:invoice.outstanding_paise 1 1 as dummy2 %}
+          {# Compute paid amount in paise #}
+          {{ invoice.total_rupees|floatformat:2 }}
+        </span>
+      </div>
+      <div class="flex justify-between py-2">
+        <span class="text-gray-800 font-bold">Outstanding Balance:</span>
+        <span class="font-mono font-bold text-red-600 text-lg">
+          ₹{% widthratio invoice.outstanding_paise 100 1 %}.00
+        </span>
+      </div>
+    </div>
+    {% if invoice.outstanding_paise > 0 %}
+    <a href="{% url 'payment_create' %}?customer={{ invoice.customer.id }}"
+       class="mt-4 block text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded">
+      Record Payment
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

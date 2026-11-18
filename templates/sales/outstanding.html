@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Outstanding Receivables{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold">Outstanding Balances & Receivables</h1>
+    <p class="text-sm text-gray-500">Customer ledger balances computed dynamically from posted invoices and allocations</p>
+  </div>
+  <a href="{% url 'payment_create' %}" class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded">+ Record Payment</a>
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-x-auto">
+<table class="w-full text-sm">
+  <thead class="bg-gray-50 border-b">
+    <tr>
+      <th class="px-5 py-3 text-left">Customer</th>
+      <th class="px-4 py-3 text-left">State</th>
+      <th class="px-4 py-3 text-left">Type</th>
+      <th class="px-4 py-3 text-right">Total Invoiced (₹)</th>
+      <th class="px-4 py-3 text-right">Total Paid (₹)</th>
+      <th class="px-5 py-3 text-right">Outstanding (₹)</th>
+      <th class="px-4 py-3 text-center">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in data %}
+  <tr class="border-b hover:bg-gray-50">
+    <td class="px-5 py-3 font-medium text-gray-900">{{ row.customer.name }}</td>
+    <td class="px-4 py-3 text-xs uppercase text-gray-600">{{ row.customer.state_code }}</td>
+    <td class="px-4 py-3 text-xs capitalize text-gray-600">{{ row.customer.get_customer_type_display }}</td>
+    <td class="px-4 py-3 text-right font-mono text-gray-700">₹{% widthratio row.total_invoiced_paise 100 1 %}.00</td>
+    <td class="px-4 py-3 text-right font-mono text-green-700">₹{% widthratio row.total_paid_paise 100 1 %}.00</td>
+    <td class="px-5 py-3 text-right font-mono font-bold {% if row.outstanding_paise > 0 %}text-red-600 text-base{% else %}text-green-600{% endif %}">
+      ₹{{ row.outstanding_rupees|floatformat:2 }}
+    </td>
+    <td class="px-4 py-3 text-center">
+      {% if row.outstanding_paise > 0 %}
+      <a href="{% url 'payment_create' %}?customer={{ row.customer.id }}"
+         class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold px-2 py-1 rounded">
+        Collect
+      </a>
+      {% else %}
+      <span class="text-xs text-gray-400">Settled</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="7" class="px-5 py-8 text-center text-gray-400">No customers with invoice activity yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
