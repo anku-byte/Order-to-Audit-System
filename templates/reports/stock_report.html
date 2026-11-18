@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Stock Valuation Report - SnackAudit{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <div class="text-xs text-blue-600 font-semibold mb-1"><a href="{% url 'reports_home' %}">&larr; Back to Reports</a></div>
+    <h1 class="text-2xl font-bold">Inventory Valuation Report (Weighted Average Cost)</h1>
+  </div>
+  <a href="?export=csv" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 rounded font-medium">Export CSV</a>
+</div>
+
+{% regroup items_data by item.get_category_display as grouped %}
+{% for group in grouped %}
+<div class="bg-white rounded-lg shadow mb-6 border">
+  <div class="px-5 py-3 bg-gray-50 border-b font-semibold text-gray-800">{{ group.grouper }}</div>
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b text-xs text-gray-600">
+      <tr>
+        <th class="px-5 py-2 text-left">Item Name</th>
+        <th class="px-4 py-2 text-left">Base Unit</th>
+        <th class="px-4 py-2 text-right">Current Balance</th>
+        <th class="px-4 py-2 text-right">WAC Unit Rate (₹)</th>
+        <th class="px-4 py-2 text-right">Total Valuation (₹)</th>
+        <th class="px-4 py-2 text-center">Action</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y">
+      {% for d in group.list %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-5 py-2 font-medium">{{ d.item.name }}</td>
+        <td class="px-4 py-2 text-gray-600">{{ d.item.base_unit }}</td>
+        <td class="px-4 py-2 text-right font-mono">{{ d.balance }}</td>
+        <td class="px-4 py-2 text-right font-mono">₹{{ d.wac_rupees|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono font-bold">₹{{ d.value_rupees|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-center">
+          <a href="{% url 'stock_ledger' d.item.id %}" class="text-xs text-blue-600 hover:underline">Ledger</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+{% endblock %}

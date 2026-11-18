@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}GST Summary - SnackAudit{% endblock %}
+{% block content %}
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+  <div>
+    <div class="text-xs text-blue-600 font-semibold mb-1"><a href="{% url 'reports_home' %}">&larr; Back to Reports</a></div>
+    <h1 class="text-2xl font-bold">GST Liability Summary</h1>
+  </div>
+  <form method="get" class="flex items-center gap-2 text-sm">
+    <input type="date" name="from_date" value="{{ from_date }}" class="border rounded px-2 py-1 text-xs">
+    <span class="text-gray-500">to</span>
+    <input type="date" name="to_date" value="{{ to_date }}" class="border rounded px-2 py-1 text-xs">
+    <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Filter</button>
+  </form>
+</div>
+
+<!-- Intrastate (CGST + SGST) -->
+<div class="bg-white rounded-lg shadow mb-6 border">
+  <div class="px-5 py-3 bg-blue-50 border-b flex items-center justify-between">
+    <h2 class="font-bold text-blue-900">Intrastate Supplies (Tamil Nadu &rarr; Tamil Nadu: CGST 6% + SGST 6%)</h2>
+    <span class="text-xs bg-blue-200 text-blue-800 px-2 py-0.5 rounded font-semibold">{{ intrastate|length }} Invoices</span>
+  </div>
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b text-xs text-gray-600">
+      <tr>
+        <th class="px-4 py-2 text-left">Invoice #</th>
+        <th class="px-4 py-2 text-left">Date</th>
+        <th class="px-4 py-2 text-left">Customer</th>
+        <th class="px-4 py-2 text-right">Taxable (₹)</th>
+        <th class="px-4 py-2 text-right">CGST (₹)</th>
+        <th class="px-4 py-2 text-right">SGST (₹)</th>
+        <th class="px-4 py-2 text-right">Total (₹)</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y">
+      {% for inv in intrastate %}
+      <tr>
+        <td class="px-4 py-2 font-mono text-blue-600"><a href="{% url 'invoice_detail' inv.id %}">{{ inv.invoice_number }}</a></td>
+        <td class="px-4 py-2 text-gray-600">{{ inv.invoice_date }}</td>
+        <td class="px-4 py-2">{{ inv.customer.name }}</td>
+        <td class="px-4 py-2 text-right font-mono">{{ inv.taxable_value_rupees|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono text-green-700">{{ inv.cgst_rupees|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono text-green-700">{{ inv.sgst_rupees|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono font-bold">{{ inv.total_rupees|floatformat:2 }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="py-4 text-center text-gray-500">No intrastate invoices.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot class="bg-gray-50 border-t font-semibold">
+      <tr>
+        <td colspan="3" class="px-4 py-2 text-right">Intrastate Totals:</td>
+        <td class="px-4 py-2 text-right font-mono">₹{{ intrastate_totals.taxable|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono text-green-800">₹{{ intrastate_totals.cgst|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono text-green-800">₹{{ intrastate_totals.sgst|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono font-bold">₹{{ intrastate_totals.total|floatformat:2 }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- Interstate (IGST) -->
+<div class="bg-white rounded-lg shadow mb-6 border">
+  <div class="px-5 py-3 bg-purple-50 border-b flex items-center justify-between">
+    <h2 class="font-bold text-purple-900">Interstate Supplies (Tamil Nadu &rarr; Other States: IGST 12%)</h2>
+    <span class="text-xs bg-purple-200 text-purple-800 px-2 py-0.5 rounded font-semibold">{{ interstate|length }} Invoices</span>
+  </div>
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b text-xs text-gray-600">
+      <tr>
+        <th class="px-4 py-2 text-left">Invoice #</th>
+        <th class="px-4 py-2 text-left">Date</th>
+        <th class="px-4 py-2 text-left">Customer (State)</th>
+        <th class="px-4 py-2 text-right">Taxable (₹)</th>
+        <th class="px-4 py-2 text-right">IGST (₹)</th>
+        <th class="px-4 py-2 text-right">Total (₹)</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y">
+      {% for inv in interstate %}
+      <tr>
+        <td class="px-4 py-2 font-mono text-purple-600"><a href="{% url 'invoice_detail' inv.id %}">{{ inv.invoice_number }}</a></td>
+        <td class="px-4 py-2 text-gray-600">{{ inv.invoice_date }}</td>
+        <td class="px-4 py-2">{{ inv.customer.name }} ({{ inv.customer.state_code }})</td>
+        <td class="px-4 py-2 text-right font-mono">{{ inv.taxable_value_rupees|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono text-purple-700">{{ inv.igst_rupees|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono font-bold">{{ inv.total_rupees|floatformat:2 }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="py-4 text-center text-gray-500">No interstate invoices.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot class="bg-gray-50 border-t font-semibold">
+      <tr>
+        <td colspan="3" class="px-4 py-2 text-right">Interstate Totals:</td>
+        <td class="px-4 py-2 text-right font-mono">₹{{ interstate_totals.taxable|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono text-purple-800">₹{{ interstate_totals.igst|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono font-bold">₹{{ interstate_totals.total|floatformat:2 }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% endblock %}

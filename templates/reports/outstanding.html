@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Receivables Ageing Report - SnackAudit{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <div class="text-xs text-blue-600 font-semibold mb-1"><a href="{% url 'reports_home' %}">&larr; Back to Reports</a></div>
+  <h1 class="text-2xl font-bold">Customer Outstanding & Ageing Analysis</h1>
+  <p class="text-sm text-gray-600">Receivables broken down across standard 30-day ageing brackets.</p>
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-x-auto border">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b text-xs text-gray-600">
+      <tr>
+        <th class="px-5 py-3 text-left">Customer</th>
+        <th class="px-4 py-3 text-right">0–30 Days (₹)</th>
+        <th class="px-4 py-3 text-right">31–60 Days (₹)</th>
+        <th class="px-4 py-3 text-right">61–90 Days (₹)</th>
+        <th class="px-4 py-3 text-right">90+ Days (₹)</th>
+        <th class="px-5 py-3 text-right font-bold text-gray-800">Total Outstanding (₹)</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y">
+      {% for d in data %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-5 py-3 font-medium text-gray-900">
+          {{ d.customer.name }}
+          <span class="text-xs text-gray-500 block">{{ d.customer.get_customer_type_display }}</span>
+        </td>
+        <td class="px-4 py-3 text-right font-mono text-gray-700">{{ d.buckets.0_30|floatformat:2 }}</td>
+        <td class="px-4 py-3 text-right font-mono {% if d.buckets.31_60 > 0 %}text-amber-700 font-medium{% else %}text-gray-400{% endif %}">
+          {{ d.buckets.31_60|floatformat:2 }}
+        </td>
+        <td class="px-4 py-3 text-right font-mono {% if d.buckets.61_90 > 0 %}text-orange-700 font-medium{% else %}text-gray-400{% endif %}">
+          {{ d.buckets.61_90|floatformat:2 }}
+        </td>
+        <td class="px-4 py-3 text-right font-mono {% if d.buckets.over_90 > 0 %}text-red-700 font-bold{% else %}text-gray-400{% endif %}">
+          {{ d.buckets.over_90|floatformat:2 }}
+        </td>
+        <td class="px-5 py-3 text-right font-mono font-bold text-blue-900">
+          ₹{{ d.outstanding_rupees|floatformat:2 }}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center py-8 text-gray-500">No overdue receivables. All invoices are settled!</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Reports Hub - SnackAudit{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold">Audit & Management Reports</h1>
+  <p class="text-sm text-gray-600">Access statutory compliance registers, stock valuations, production variances, and receivables ageing.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <!-- Sales Register -->
+  <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition border border-gray-100 flex flex-col justify-between">
+    <div>
+      <div class="text-blue-600 text-2xl mb-2">📊</div>
+      <h2 class="text-lg font-bold text-gray-800">Sales Register</h2>
+      <p class="text-sm text-gray-600 mt-1">Detailed list of posted invoices with taxable amount, split GST, and customer breakdown.</p>
+    </div>
+    <div class="mt-4 pt-4 border-t flex items-center justify-between">
+      <a href="{% url 'report_sales' %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">View Report &rarr;</a>
+      <a href="{% url 'report_sales' %}?export=csv" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded">CSV</a>
+    </div>
+  </div>
+
+  <!-- GST Summary -->
+  <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition border border-gray-100 flex flex-col justify-between">
+    <div>
+      <div class="text-green-600 text-2xl mb-2">🏛️</div>
+      <h2 class="text-lg font-bold text-gray-800">GST Summary</h2>
+      <p class="text-sm text-gray-600 mt-1">Intrastate (CGST + SGST) and Interstate (IGST) tax liabilities with exact paise totals.</p>
+    </div>
+    <div class="mt-4 pt-4 border-t">
+      <a href="{% url 'report_gst' %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">View Report &rarr;</a>
+    </div>
+  </div>
+
+  <!-- Stock Valuation -->
+  <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition border border-gray-100 flex flex-col justify-between">
+    <div>
+      <div class="text-purple-600 text-2xl mb-2">📦</div>
+      <h2 class="text-lg font-bold text-gray-800">Stock Valuation & WAC</h2>
+      <p class="text-sm text-gray-600 mt-1">Inventory balances, Weighted Average Cost (WAC), and current inventory valuation.</p>
+    </div>
+    <div class="mt-4 pt-4 border-t flex items-center justify-between">
+      <a href="{% url 'report_stock' %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">View Report &rarr;</a>
+      <a href="{% url 'report_stock' %}?export=csv" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded">CSV</a>
+    </div>
+  </div>
+
+  <!-- Production & Variance -->
+  <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition border border-gray-100 flex flex-col justify-between">
+    <div>
+      <div class="text-yellow-600 text-2xl mb-2">⚙️</div>
+      <h2 class="text-lg font-bold text-gray-800">Production & Yield Audit</h2>
+      <p class="text-sm text-gray-600 mt-1">Batch runs, actual vs standard consumption, scrap rates, and tolerance variance flags (>3%).</p>
+    </div>
+    <div class="mt-4 pt-4 border-t">
+      <a href="{% url 'report_production' %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">View Report &rarr;</a>
+    </div>
+  </div>
+
+  <!-- Outstanding Ageing -->
+  <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition border border-gray-100 flex flex-col justify-between">
+    <div>
+      <div class="text-red-600 text-2xl mb-2">⏳</div>
+      <h2 class="text-lg font-bold text-gray-800">Customer Ageing Analysis</h2>
+      <p class="text-sm text-gray-600 mt-1">Receivables ageing report categorized into 0-30, 31-60, 61-90, and 90+ day buckets.</p>
+    </div>
+    <div class="mt-4 pt-4 border-t">
+      <a href="{% url 'report_outstanding' %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">View Report &rarr;</a>
+    </div>
+  </div>
+
+  <!-- Purchase Register -->
+  <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition border border-gray-100 flex flex-col justify-between">
+    <div>
+      <div class="text-indigo-600 text-2xl mb-2">🛒</div>
+      <h2 class="text-lg font-bold text-gray-800">Purchase Register</h2>
+      <p class="text-sm text-gray-600 mt-1">Inward purchases log, supplier details, raw material pricing, and total procurement cost.</p>
+    </div>
+    <div class="mt-4 pt-4 border-t flex items-center justify-between">
+      <a href="{% url 'report_purchases' %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">View Report &rarr;</a>
+      <a href="{% url 'report_purchases' %}?export=csv" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded">CSV</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
